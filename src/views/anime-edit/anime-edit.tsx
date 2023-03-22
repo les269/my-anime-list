@@ -1,6 +1,6 @@
 import { InputText } from "primereact/inputtext";
 import styled from "styled-components";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Editor } from "primereact/editor";
 import {
   InputNumber,
@@ -8,15 +8,16 @@ import {
   InputNumberValueChangeEvent,
 } from "primereact/inputnumber";
 import { Chips } from "primereact/chips";
-import { Calendar, CalendarChangeEvent } from "primereact/calendar";
-import { Image } from "primereact/image";
+import { Calendar } from "primereact/calendar";
 import { Button } from "primereact/button";
-import { AnimeInfo } from "../../utils/typings";
+import { AnimeInfo, Result } from "../../utils/typings";
 import {
   useSearchAnimeInfoMutation,
   useUpdateAnimeInfoMutation,
 } from "../../redux/api/anime-info-api";
 import moment from "moment";
+import { get, isBlank, isNumeric, replace } from "../../utils/helpers";
+import { Toast } from "primereact/toast";
 
 const Card = styled.div`
   background: var(--surface-card);
@@ -39,62 +40,74 @@ const Label = styled.label`
   margin-bottom: 0.5rem;
 `;
 
-const initialValues: AnimeInfo = {
-  officialName: "",
-  chineseName: "",
-  author: [],
-  studio: [],
-  date: undefined,
-  category: [],
-  episode: 1,
-  wikiUrl: "",
-  imgUrl: "",
-  outline: "",
-  startDate: undefined,
-  endDate: undefined,
-};
-
 const AnimeEdit = () => {
   const [name, setName] = useState("");
-  const [values, setValues] = useState(initialValues);
-  const [updateAnimeInfo] = useUpdateAnimeInfoMutation();
-  const [searchAnimeInfo, { data: searchData }] = useSearchAnimeInfoMutation();
 
-  const handleInputChange = (e: any) => {
-    const { id, value } = e.target;
-    setValues({
-      ...values,
-      [id]: value,
-    });
-  };
-  const handleNumberInputChange = (
-    id: string,
-    e: InputNumberValueChangeEvent
-  ) => {
-    setValues({
-      ...values,
-      [id]: e.value,
-    });
-  };
+  const [officialName, setOfficialName] = useState("");
+  const [chineseName, setChineseName] = useState("");
+  const [author, setAuthor] = useState([] as string[]);
+  const [studio, setStudio] = useState([] as string[]);
+  const [date, setDate] = useState([] as Date[] | undefined);
+  const [category, setCategory] = useState([] as string[]);
+  const [episode, setEpisode] = useState(1);
+  const [wikiUrl, setWikiUrl] = useState("");
+  const [imgUrl, setImgUrl] = useState("");
+  const [outline, setOutline] = useState("");
+
+  // const [values, setValues] = useState(initialValues);
+  const [updateAnimeInfo] = useUpdateAnimeInfoMutation();
+  const [searchAnimeInfo, searchResult] = useSearchAnimeInfoMutation();
+  const toast = useRef<Toast>(null);
 
   const search = async () => {
-    console.log(process.env);
-
+    if (isBlank(name)) {
+      return toast.current?.show({
+        severity: "warn",
+        detail: "輸入名稱後搜尋",
+      });
+    }
     console.log(name);
-    await searchAnimeInfo({ name });
-    if (searchData && searchData.data) {
-      let data = searchData.data;
-      data.date = data.date?.map((x) => moment(x).toDate());
-      setValues(data);
+    const res = await searchAnimeInfo({ name });
+    const result: Result<AnimeInfo> | undefined = get(res, "data");
+    if (result && result.type === "S") {
+      const data = result.data;
+      setOfficialName(data.officialName);
+      setChineseName(replace(data.chineseName));
+      setAuthor(data.author!);
+      setStudio(data.studio!);
+      setDate(data.date?.map((x) => moment(x).toDate()));
+      setCategory(data.category!);
+      setEpisode(data.episode!);
+      setWikiUrl(replace(data.wikiUrl));
+      setImgUrl(replace(data.imgUrl));
+      setOutline(replace(data.outline));
+    } else {
+      toast.current?.show({ severity: "error", detail: "找無資料" });
     }
   };
 
   const update = async () => {
-    let req = { ...values };
+    let req: AnimeInfo = {
+      officialName,
+      chineseName,
+      author,
+      studio,
+      date,
+      category,
+      episode,
+      wikiUrl,
+      imgUrl,
+      outline,
+    };
     req.startDate = req.date && req.date.length >= 1 ? req.date[0] : undefined;
     req.endDate = req.date && req.date.length === 2 ? req.date[1] : undefined;
     const res = await updateAnimeInfo(req);
-    console.log(res);
+    const data: Result<void> | undefined = get(res, "data");
+    if (data && data.type === "S") {
+      toast.current?.show({ severity: "success", detail: "更新成功" });
+    } else {
+      toast.current?.show({ severity: "error", detail: "更新失敗" });
+    }
   };
 
   return (
@@ -117,11 +130,12 @@ const AnimeEdit = () => {
         <div className="grid">
           <div className="flex col-8 flex-column justify-content-between">
             <div className="flex w-auto mb-5 justify-content-center h-full border-solid border-200">
-              {values.imgUrl && (
+              {imgUrl && (
                 <img
+                  key="imgUrl"
                   alt=""
                   height="auto"
-                  src={values.imgUrl}
+                  src={imgUrl}
                   style={{
                     border: "1px solid #dee2e6",
                     borderRadius: "0.25rem",
@@ -135,8 +149,8 @@ const AnimeEdit = () => {
               <InputText
                 className="w-full"
                 id="imgUrl"
-                value={values.imgUrl}
-                onChange={handleInputChange}
+                value={imgUrl}
+                onChange={(e) => setImgUrl(e.target.value)}
               />
             </div>
           </div>
@@ -146,8 +160,8 @@ const AnimeEdit = () => {
               <InputText
                 id="officialName"
                 className="w-full"
-                value={values.officialName}
-                onChange={handleInputChange}
+                value={officialName}
+                onChange={(e) => setOfficialName(e.target.value)}
               />
             </div>
 
@@ -156,8 +170,8 @@ const AnimeEdit = () => {
               <InputText
                 id="chineseName"
                 className="w-full"
-                value={values.chineseName}
-                onChange={handleInputChange}
+                value={chineseName}
+                onChange={(e) => setChineseName(e.target.value)}
               />
             </div>
 
@@ -166,8 +180,8 @@ const AnimeEdit = () => {
               <Chips
                 className="w-full flex"
                 id="author"
-                value={values.author}
-                onChange={handleInputChange}
+                value={author}
+                onChange={(e) => setAuthor(e.target.value!)}
                 placeholder="需要按enter or ,"
                 separator=","
               />
@@ -177,8 +191,8 @@ const AnimeEdit = () => {
               <Chips
                 id="studio"
                 className="w-full"
-                value={values.studio}
-                onChange={handleInputChange}
+                value={studio}
+                onChange={(e) => setStudio(e.target.value!)}
                 placeholder="需要按enter or ,"
                 separator=","
               />
@@ -191,9 +205,9 @@ const AnimeEdit = () => {
                 readOnlyInput
                 selectionMode="range"
                 dateFormat="yy/mm/dd"
-                value={values.date}
+                value={date}
                 onChange={(e) => {
-                  handleInputChange(e);
+                  if (Array.isArray(e.value)) setDate(e.value);
                 }}
               />
             </div>
@@ -210,8 +224,8 @@ const AnimeEdit = () => {
                 incrementButtonClassName="p-button-success"
                 incrementButtonIcon="pi pi-plus"
                 decrementButtonIcon="pi pi-minus"
-                value={values.episode}
-                onValueChange={(e) => handleNumberInputChange("episode", e)}
+                value={episode}
+                onValueChange={(e) => setEpisode(e.value!)}
               />
             </div>
             <div className="w-full flex-auto">
@@ -219,8 +233,8 @@ const AnimeEdit = () => {
               <InputText
                 id="wikiUrl"
                 className="w-full"
-                value={values.wikiUrl}
-                onChange={handleInputChange}
+                value={wikiUrl}
+                onChange={(e) => setWikiUrl(e.target.value)}
               />
             </div>
 
@@ -229,8 +243,8 @@ const AnimeEdit = () => {
               <Chips
                 className="w-full flex"
                 id="category"
-                value={values.category}
-                onChange={handleInputChange}
+                value={category}
+                onChange={(e) => setCategory(e.value!)}
                 placeholder="需要按enter or ,"
                 separator=","
               />
@@ -243,7 +257,7 @@ const AnimeEdit = () => {
           <Editor
             style={{ height: "320px" }}
             id="outline"
-            value={values.outline}
+            value={outline}
             headerTemplate={
               <span className="ql-formats">
                 <button className="ql-bold" aria-label="Bold"></button>
@@ -254,20 +268,18 @@ const AnimeEdit = () => {
                 ></button>
               </span>
             }
-            onTextChange={(e) => {
-              setValues({ ...values, outline: e.htmlValue! });
-            }}
           />
         </div>
         <div className="flex justify-content-end pt-4">
-          <Button
+          {/* <Button
             className="mr-4"
             label="清除"
             onClick={() => setValues(initialValues)}
-          />
+          /> */}
           <Button label="更新" onClick={() => update()} />
         </div>
       </Card>
+      <Toast ref={toast} />
     </>
   );
 };

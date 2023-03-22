@@ -32,7 +32,11 @@ const Layout = () => {
       >
         <div className="w-full layout-menu">
           {MyRouteList.map((route) => (
-            <AppMenu item={route} clickMenu={clickMenu}></AppMenu>
+            <AppMenu
+              key={route.title}
+              item={route}
+              clickMenu={clickMenu}
+            ></AppMenu>
           ))}
         </div>
       </Sidebar>
