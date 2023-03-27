@@ -1,21 +1,11 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import { MyRouteList } from "../../utils/constants";
-import { useAppDispatch } from "../../utils/hook";
-import { changeTitle } from "../../redux/reducer/app-reducer";
-import { MyRouterType } from "../../utils/typings";
 import Header from "./header";
 import styled from "styled-components";
 import { useState } from "react";
 
 const Layout = ({ className }: { className?: string }) => {
   const [showSidebar, setShowSidebar] = useState(false);
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-
-  const clickMenu = (route: MyRouterType) => {
-    dispatch(changeTitle(route));
-    navigate(route.path);
-  };
 
   return (
     <div className={className}>
@@ -26,7 +16,7 @@ const Layout = ({ className }: { className?: string }) => {
             {MyRouteList.map((route) => (
               <ul className="menu" key={route.title}>
                 <li>
-                  <a onClick={() => clickMenu(route)}>{route.title}</a>
+                  <Link to={route.path}>{route.title} </Link>
                 </li>
               </ul>
             ))}
@@ -41,6 +31,9 @@ const Layout = ({ className }: { className?: string }) => {
 };
 
 const StyledLayout = styled(Layout)`
+  .container {
+  }
+
   .sidebar {
     display: block;
     position: fixed;
@@ -76,14 +69,12 @@ const StyledLayout = styled(Layout)`
   }
 
   .content {
-    height: 100vh;
     background-color: var(--surface-ground);
     transition: margin-left 0.3s ease-in-out;
     margin-left: 0;
     padding-top: 5rem;
     padding-left: 1rem;
     padding-right: 1rem;
-    overflow: auto;
   }
 
   .container.active .sidebar {

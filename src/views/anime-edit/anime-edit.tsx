@@ -112,7 +112,7 @@ const AnimeEdit = () => {
   };
 
   return (
-    <>
+    <div style={{ paddingBottom: "8px" }}>
       <Card className="card">
         <div className="w-full flex-auto">
           <Label>名稱</Label>
@@ -286,7 +286,7 @@ const AnimeEdit = () => {
         </div>
       </Card>
       <Toast ref={toast} />
-    </>
+    </div>
   );
 };
 

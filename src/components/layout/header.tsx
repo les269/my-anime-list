@@ -1,7 +1,7 @@
-import { useAppDispatch, useAppSelector } from "../../utils/hook";
-import { changeDraw } from "../../redux/reducer/app-reducer";
 import { Button } from "primereact/button";
 import styled from "styled-components";
+import { useLocation } from "react-router-dom";
+import { MyRouteList } from "../../utils/constants";
 
 const LayoutTopbar = styled.div`
   padding: 0;
@@ -24,7 +24,9 @@ const LayoutTitle = styled.h6`
   padding: 0 2rem;
 `;
 const Header = (props: { showSidebar: () => void }) => {
-  const { title } = useAppSelector((state) => state.app);
+  let location = useLocation();
+  console.log(location);
+
   return (
     <LayoutTopbar>
       <LayoutTopbarInner>
@@ -34,7 +36,9 @@ const Header = (props: { showSidebar: () => void }) => {
           text
           onClick={() => props.showSidebar()}
         />
-        <LayoutTitle>{title}</LayoutTitle>
+        <LayoutTitle>
+          {MyRouteList.find((x) => x.path === location.pathname)?.title}
+        </LayoutTitle>
       </LayoutTopbarInner>
     </LayoutTopbar>
   );
