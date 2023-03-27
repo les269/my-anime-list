@@ -18,6 +18,7 @@ import {
 import moment from "moment";
 import { get, isBlank, isNumeric, replace } from "../../utils/helpers";
 import { Toast } from "primereact/toast";
+import ReactQuill from "react-quill";
 
 const Card = styled.div`
   background: var(--surface-card);
@@ -86,7 +87,7 @@ const AnimeEdit = () => {
     }
   };
 
-  const update = async () => {
+  const save = async () => {
     let req: AnimeInfo = {
       officialName,
       chineseName,
@@ -251,23 +252,28 @@ const AnimeEdit = () => {
             </div>
           </div>
         </div>
-
-        <div className="w-full flex-auto">
+        <div className="w-full flex flex-column ">
           <Label className="font-bold block mb-2">故事簡介</Label>
-          <Editor
-            style={{ height: "320px" }}
-            id="outline"
+          <ReactQuill
+            className="flex flex-column"
+            style={{ height: "280px" }}
+            modules={{
+              toolbar: [
+                [{ header: [1, 2, false] }],
+                ["bold", "italic", "underline", "strike", "blockquote"],
+                [
+                  { list: "ordered" },
+                  { list: "bullet" },
+                  { indent: "-1" },
+                  { indent: "+1" },
+                ],
+              ],
+            }}
+            theme="snow"
             value={outline}
-            headerTemplate={
-              <span className="ql-formats">
-                <button className="ql-bold" aria-label="Bold"></button>
-                <button className="ql-italic" aria-label="Italic"></button>
-                <button
-                  className="ql-underline"
-                  aria-label="Underline"
-                ></button>
-              </span>
-            }
+            onChange={(e) => {
+              setOutline(e);
+            }}
           />
         </div>
         <div className="flex justify-content-end pt-4">
@@ -276,7 +282,7 @@ const AnimeEdit = () => {
             label="清除"
             onClick={() => setValues(initialValues)}
           /> */}
-          <Button label="更新" onClick={() => update()} />
+          <Button label="保存" onClick={() => save()} />
         </div>
       </Card>
       <Toast ref={toast} />

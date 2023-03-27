@@ -23,9 +23,8 @@ const LayoutTopbarInner = styled.div`
 const LayoutTitle = styled.h6`
   padding: 0 2rem;
 `;
-const Header = () => {
+const Header = (props: { showSidebar: () => void }) => {
   const { title } = useAppSelector((state) => state.app);
-  const dispatch = useAppDispatch();
   return (
     <LayoutTopbar>
       <LayoutTopbarInner>
@@ -33,7 +32,7 @@ const Header = () => {
           icon="pi pi-bars"
           rounded
           text
-          onClick={() => dispatch(changeDraw())}
+          onClick={() => props.showSidebar()}
         />
         <LayoutTitle>{title}</LayoutTitle>
       </LayoutTopbarInner>
