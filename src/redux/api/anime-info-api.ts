@@ -17,8 +17,14 @@ export const animeInfoApi = api.injectEndpoints({
         body: req,
       }),
     }),
+    animeList: build.query<Result<AnimeInfo[]>, void>({
+      query: () => "/anime-info/list",
+    }),
   }),
 });
 
-export const { useUpdateAnimeInfoMutation, useSearchAnimeInfoMutation } =
-  animeInfoApi;
+export const {
+  useUpdateAnimeInfoMutation,
+  useSearchAnimeInfoMutation,
+  useAnimeListQuery,
+} = animeInfoApi;

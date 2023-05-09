@@ -10,10 +10,12 @@ import "primereact/resources/themes/lara-light-indigo/theme.css"; // theme
 import "primereact/resources/primereact.css"; // core css
 import "primeicons/primeicons.css"; // icons
 import "primeflex/primeflex.css";
+import PrimeReact from "primereact/api";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
+PrimeReact.ripple = true;
 
 root.render(
   <React.StrictMode>

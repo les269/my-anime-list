@@ -3,6 +3,7 @@ import { MyRouteList } from "../../utils/constants";
 import Header from "./header";
 import styled from "styled-components";
 import { useState } from "react";
+import { Ripple } from "primereact/ripple";
 
 const Layout = ({ className }: { className?: string }) => {
   const [showSidebar, setShowSidebar] = useState(false);
@@ -10,13 +11,16 @@ const Layout = ({ className }: { className?: string }) => {
   return (
     <div className={className}>
       <div className={`container ${showSidebar ? "active" : ""}`}>
-        <Header showSidebar={() => setShowSidebar((x) => !x)}></Header>
+        <Header
+          className="header"
+          showSidebar={() => setShowSidebar((x) => !x)}
+        ></Header>
         <div className="sidebar">
           <div className="w-full layout-menu">
             {MyRouteList.map((route) => (
               <ul className="menu" key={route.title}>
                 <li>
-                  <Link to={route.path}>{route.title} </Link>
+                  <Link to={route.path}>{route.title}</Link>
                 </li>
               </ul>
             ))}
@@ -32,16 +36,17 @@ const Layout = ({ className }: { className?: string }) => {
 
 const StyledLayout = styled(Layout)`
   .container {
+    min-height: 100vh;
+    background-color: var(--surface-ground);
   }
 
   .sidebar {
     display: block;
     position: fixed;
     height: 100%;
-    top: 5rem;
     left: 0;
     width: 250px;
-    background: var(--menu-bg);
+    background-color: #ffffff;
     border-right: var(--sidebar-border);
     box-shadow: var(--sidebar-shadow);
     flex-direction: column;
@@ -69,7 +74,6 @@ const StyledLayout = styled(Layout)`
   }
 
   .content {
-    background-color: var(--surface-ground);
     transition: margin-left 0.3s ease-in-out;
     margin-left: 0;
     padding-top: 5rem;
@@ -81,7 +85,8 @@ const StyledLayout = styled(Layout)`
     transform: translateX(0) !important;
   }
 
-  .container.active .content {
+  .container.active .content,
+  .container.active .header {
     margin-left: 250px !important;
   }
 `;

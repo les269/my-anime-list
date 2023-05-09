@@ -48,7 +48,7 @@ const AnimeEdit = () => {
   const [chineseName, setChineseName] = useState("");
   const [author, setAuthor] = useState([] as string[]);
   const [studio, setStudio] = useState([] as string[]);
-  const [date, setDate] = useState([] as Date[] | undefined);
+  const [date, setDate] = useState(undefined as Date[] | undefined);
   const [category, setCategory] = useState([] as string[]);
   const [episode, setEpisode] = useState(1);
   const [wikiUrl, setWikiUrl] = useState("");
@@ -111,6 +111,19 @@ const AnimeEdit = () => {
     }
   };
 
+  const clear = () => {
+    setOfficialName("");
+    setChineseName("");
+    setAuthor([]);
+    setStudio([]);
+    setDate(undefined);
+    setCategory([]);
+    setEpisode(1);
+    setWikiUrl("");
+    setImgUrl("");
+    setOutline("");
+  };
+
   return (
     <div style={{ paddingBottom: "8px" }}>
       <Card className="card">
@@ -133,6 +146,7 @@ const AnimeEdit = () => {
             <div className="flex w-auto mb-5 justify-content-center h-full border-solid border-200">
               {imgUrl && (
                 <img
+                  className="mx-auto max-w-full"
                   key="imgUrl"
                   alt=""
                   height="auto"
@@ -277,12 +291,8 @@ const AnimeEdit = () => {
           />
         </div>
         <div className="flex justify-content-end pt-4">
-          {/* <Button
-            className="mr-4"
-            label="清除"
-            onClick={() => setValues(initialValues)}
-          /> */}
-          <Button label="保存" onClick={() => save()} />
+          <Button className="mr-4" label="清除" onClick={clear} />
+          <Button label="保存" onClick={save} />
         </div>
       </Card>
       <Toast ref={toast} />

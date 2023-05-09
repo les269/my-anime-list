@@ -12,6 +12,8 @@ const LayoutTopbar = styled.div`
   z-index: 1100;
   border-bottom: 1px solid var(--surface-border);
   backdrop-filter: blur(8px);
+  background-color: #ffffff80;
+  transition: margin-left 0.3s ease-in-out;
 `;
 const LayoutTopbarInner = styled.div`
   height: 100%;
@@ -23,19 +25,13 @@ const LayoutTopbarInner = styled.div`
 const LayoutTitle = styled.h6`
   padding: 0 2rem;
 `;
-const Header = (props: { showSidebar: () => void }) => {
+const Header = (props: { showSidebar: () => void; className?: string }) => {
+  const { showSidebar, className } = props;
   let location = useLocation();
-  console.log(location);
-
   return (
-    <LayoutTopbar>
+    <LayoutTopbar className={className}>
       <LayoutTopbarInner>
-        <Button
-          icon="pi pi-bars"
-          rounded
-          text
-          onClick={() => props.showSidebar()}
-        />
+        <Button icon="pi pi-bars" rounded text onClick={() => showSidebar()} />
         <LayoutTitle>
           {MyRouteList.find((x) => x.path === location.pathname)?.title}
         </LayoutTitle>
