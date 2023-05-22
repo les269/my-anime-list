@@ -1,12 +1,7 @@
 import { InputText } from "primereact/inputtext";
 import styled from "styled-components";
-import { useEffect, useRef, useState } from "react";
-import { Editor } from "primereact/editor";
-import {
-  InputNumber,
-  InputNumberChangeEvent,
-  InputNumberValueChangeEvent,
-} from "primereact/inputnumber";
+import { useRef, useState } from "react";
+import { InputNumber } from "primereact/inputnumber";
 import { Chips } from "primereact/chips";
 import { Calendar } from "primereact/calendar";
 import { Button } from "primereact/button";
@@ -16,7 +11,7 @@ import {
   useUpdateAnimeInfoMutation,
 } from "../../redux/api/anime-info-api";
 import moment from "moment";
-import { get, isBlank, isNumeric, replace } from "../../utils/helpers";
+import { get, isBlank, replace } from "../../utils/helpers";
 import { Toast } from "primereact/toast";
 import ReactQuill from "react-quill";
 
