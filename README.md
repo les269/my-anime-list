@@ -1,3 +1,7 @@
+## 介紹
+
+新增編輯自定義影片清單 以官方名稱為主其他資料可以自行填寫
+
 ## feature
 
 - table video-data key=原名類型+type(video-type or video-tag) value 為值
