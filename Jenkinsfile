@@ -52,7 +52,7 @@ pipeline{
                     def rmContainer = sh script: 'docker rm my-anime-list-container', returnStatus: true
                     def rmImage = sh script: 'docker image rm my-anime-list', returnStatus: true
                     sh 'docker build -t my-anime-list .'
-                    sh 'docker run -d -p 8092:8080 --name my-anime-list-container my-anime-list'
+                    sh 'docker run -d -p 8092:80 --name my-anime-list-container my-anime-list'
                 }
             }
         }
