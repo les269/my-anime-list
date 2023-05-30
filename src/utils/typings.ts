@@ -21,6 +21,7 @@ export interface AnimeInfo {
   outline?: string;
   startDate?: Date;
   endDate?: Date;
+  watched?: boolean;
 }
 
 export interface SearchParam {
@@ -31,4 +32,9 @@ export interface Result<T> {
   type: "S" | "F";
   message?: string;
   data: T;
+}
+
+export interface WatchParam {
+  officeName: string;
+  watched: boolean;
 }

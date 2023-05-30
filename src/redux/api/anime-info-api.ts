@@ -1,4 +1,4 @@
-import { AnimeInfo, Result, SearchParam } from "../../utils/typings";
+import { AnimeInfo, Result, SearchParam, WatchParam } from "utils/typings";
 import { api } from "./api";
 
 export const animeInfoApi = api.injectEndpoints({
@@ -20,6 +20,21 @@ export const animeInfoApi = api.injectEndpoints({
     animeList: build.query<Result<AnimeInfo[]>, void>({
       query: () => "/anime-info/list",
     }),
+    watched: build.mutation<Result<boolean>, WatchParam>({
+      query: (req) => ({
+        url: "/anime-info/watched",
+        method: "POST",
+        body: req,
+      }),
+    }),
+    allWatched: build.query<
+      Result<{
+        [key: string]: boolean;
+      }>,
+      void
+    >({
+      query: () => "/anime-info/allWatched",
+    }),
   }),
 });
 
@@ -27,4 +42,6 @@ export const {
   useUpdateAnimeInfoMutation,
   useSearchAnimeInfoMutation,
   useAnimeListQuery,
+  useWatchedMutation,
+  useAllWatchedQuery,
 } = animeInfoApi;

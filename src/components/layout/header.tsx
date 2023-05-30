@@ -1,7 +1,7 @@
 import { Button } from "primereact/button";
 import styled from "styled-components";
 import { useLocation } from "react-router-dom";
-import { MyRouteList } from "../../utils/constants";
+import { MyRouteList } from "utils/constants";
 
 const LayoutTopbar = styled.div`
   padding: 0;

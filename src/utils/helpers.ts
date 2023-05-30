@@ -24,3 +24,11 @@ export const replace = (str: string | null | undefined): string =>
 
 export const isNumeric = (value: any): boolean =>
   !isNaN(parseFloat(value)) && isFinite(value);
+
+export const isEmpty = (value: any): boolean =>
+  value === undefined || value === null || value.length === 0;
+
+export const clone = (value: any): any => JSON.parse(JSON.stringify(value));
+
+// export const isDate = (value: any): boolean =>
+//   !isNaN(value) && value instanceof Date;

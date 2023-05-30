@@ -20,7 +20,9 @@ const Layout = ({ className }: { className?: string }) => {
             {MyRouteList.map((route) => (
               <ul className="menu" key={route.title}>
                 <li>
-                  <Link to={route.path}>{route.title}</Link>
+                  <Link to={route.path} onClick={() => setShowSidebar(false)}>
+                    {route.title}
+                  </Link>
                 </li>
               </ul>
             ))}

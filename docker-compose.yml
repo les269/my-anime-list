@@ -1,0 +1,11 @@
+version: "3" # version 代表著這份 Docker Compose file 的版本，不同的版本其 Docker engine 的支援度不同，目前有 version 1 、 version 2、 version 3 三種版本，最常使用且支援度最高的是 version 3，寫法上也很簡單就像這樣：
+
+services: # services 固定字
+  web: # 可以隨機命名，識別用
+    image: nginx:mainline-alpine3.17-slim # image 容器 + 版本號
+    container_name: my-anime-list # 容器名稱
+    restart: always # 當機器重新啟動時，服務會自動啟動
+    ports: # 容器外與容器內的Port
+      - 8092:80
+    volumes: # 將容器外檔案掛載至容器內,如果容器內相同路徑已經存在相同檔案，則會覆蓋內容
+      - ./build:/usr/share/nginx/html

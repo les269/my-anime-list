@@ -5,13 +5,13 @@ import { InputNumber } from "primereact/inputnumber";
 import { Chips } from "primereact/chips";
 import { Calendar } from "primereact/calendar";
 import { Button } from "primereact/button";
-import { AnimeInfo, Result } from "../../utils/typings";
+import { AnimeInfo, Result } from "utils/typings";
 import {
   useSearchAnimeInfoMutation,
   useUpdateAnimeInfoMutation,
 } from "../../redux/api/anime-info-api";
 import moment from "moment";
-import { get, isBlank, replace } from "../../utils/helpers";
+import { get, isBlank, replace } from "utils/helpers";
 import { Toast } from "primereact/toast";
 import ReactQuill from "react-quill";
 
@@ -62,7 +62,6 @@ const AnimeEdit = () => {
         detail: "輸入名稱後搜尋",
       });
     }
-    console.log(name);
     const res = await searchAnimeInfo({ name });
     const result: Result<AnimeInfo> | undefined = get(res, "data");
     if (result && result.type === "S") {
