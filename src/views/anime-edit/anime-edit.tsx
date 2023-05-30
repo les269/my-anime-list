@@ -1,12 +1,13 @@
 import { InputText } from "primereact/inputtext";
 import styled from "styled-components";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { InputNumber } from "primereact/inputnumber";
 import { Chips } from "primereact/chips";
 import { Calendar } from "primereact/calendar";
 import { Button } from "primereact/button";
 import { AnimeInfo, Result } from "utils/typings";
 import {
+  useDeleteAnimeMutation,
   useSearchAnimeInfoMutation,
   useUpdateAnimeInfoMutation,
 } from "../../redux/api/anime-info-api";
@@ -14,6 +15,7 @@ import moment from "moment";
 import { get, isBlank, replace } from "utils/helpers";
 import { Toast } from "primereact/toast";
 import ReactQuill from "react-quill";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 
 const Card = styled.div`
   background: var(--surface-card);
@@ -36,7 +38,9 @@ const Label = styled.label`
   margin-bottom: 0.5rem;
 `;
 
-const AnimeEdit = () => {
+const AnimeEdit = (props: { isDialog?: boolean; searchName?: string }) => {
+  const { isDialog = false, searchName = "" } = props;
+
   const [name, setName] = useState("");
 
   const [officialName, setOfficialName] = useState("");
@@ -53,16 +57,23 @@ const AnimeEdit = () => {
   // const [values, setValues] = useState(initialValues);
   const [updateAnimeInfo] = useUpdateAnimeInfoMutation();
   const [searchAnimeInfo] = useSearchAnimeInfoMutation();
+  const [deleteAnime] = useDeleteAnimeMutation();
   const toast = useRef<Toast>(null);
 
-  const search = async () => {
-    if (isBlank(name)) {
+  useEffect(() => {
+    if (isDialog) {
+      search(searchName);
+    }
+  }, [isDialog, searchName]);
+
+  const search = async (searchName: string) => {
+    if (isBlank(searchName)) {
       return toast.current?.show({
         severity: "warn",
         detail: "輸入名稱後搜尋",
       });
     }
-    const res = await searchAnimeInfo({ name });
+    const res = await searchAnimeInfo({ name: searchName });
     const result: Result<AnimeInfo> | undefined = get(res, "data");
     if (result && result.type === "S") {
       const data = result.data;
@@ -118,22 +129,46 @@ const AnimeEdit = () => {
     setOutline("");
   };
 
+  const doDeleteAnime = () => {
+    if (!isBlank(officialName)) {
+      confirmDialog({
+        message: (
+          <div>
+            確認是否刪除 <h2>{officialName}</h2>
+            <h2>{chineseName}</h2>
+          </div>
+        ),
+        header: "確認刪除",
+        icon: "pi pi-exclamation-triangle",
+        accept: () => {
+          deleteAnime({ officialName });
+          clear();
+        },
+      });
+    } else {
+      toast.current?.show({ severity: "error", detail: "先搜尋一筆資料" });
+    }
+  };
+
   return (
     <div style={{ paddingBottom: "8px" }}>
-      <Card className="card">
-        <div className="w-full flex-auto">
-          <Label>名稱</Label>
-          <InputText
-            className="w-full"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-        <div className="flex justify-content-end pt-4">
-          <Button label="搜尋" onClick={() => search()} />
-        </div>
-      </Card>
+      {!isDialog && (
+        <Card className="card">
+          <div className="w-full flex-auto">
+            <Label>名稱</Label>
+            <InputText
+              className="w-full"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-content-end pt-4">
+            <Button label="搜尋" onClick={() => search(name)} />
+          </div>
+        </Card>
+      )}
+
       <Card className="card ">
         <div className="grid">
           <div className="flex col-8 flex-column justify-content-between">
@@ -171,6 +206,7 @@ const AnimeEdit = () => {
                 className="w-full"
                 value={officialName}
                 onChange={(e) => setOfficialName(e.target.value)}
+                disabled={isDialog}
               />
             </div>
 
@@ -285,11 +321,21 @@ const AnimeEdit = () => {
           />
         </div>
         <div className="flex justify-content-end pt-4">
-          <Button className="mr-4" label="清除" onClick={clear} />
+          <Button
+            className="mr-4"
+            label="刪除"
+            severity="danger"
+            onClick={doDeleteAnime}
+          ></Button>
+          {!isDialog && (
+            <Button className="mr-4" label="清除" onClick={clear} />
+          )}
+
           <Button label="保存" onClick={save} />
         </div>
       </Card>
       <Toast ref={toast} />
+      <ConfirmDialog contentStyle={{ width: "20em" }} />
     </div>
   );
 };

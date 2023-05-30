@@ -35,6 +35,15 @@ export interface Result<T> {
 }
 
 export interface WatchParam {
-  officeName: string;
+  officialName: string;
   watched: boolean;
+}
+
+export interface WatchProgressParam {
+  officialName: string;
+  value: string;
+}
+
+export interface DeleteParam {
+  officialName: string;
 }

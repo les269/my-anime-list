@@ -1,8 +1,10 @@
 import { DataView } from "primereact/dataview";
 import { useEffect, useState } from "react";
 import {
+  useAllWatchProgressQuery,
   useAllWatchedQuery,
   useAnimeListQuery,
+  useWatchProgressMutation,
   useWatchedMutation,
 } from "../../redux/api/anime-info-api";
 import { AnimeInfo } from "utils/typings";
@@ -13,12 +15,16 @@ import { SelectButton } from "primereact/selectbutton";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { Dropdown, DropdownChangeEvent } from "primereact/dropdown";
+import { Dialog } from "primereact/dialog";
 
 import ReactQuill from "react-quill";
 import "./anime-list.scss";
-import { clone, isBlank, isEmpty } from "utils/helpers";
+import { clone, isBlank, isEmpty, replace } from "utils/helpers";
 
 import wiki from "assets/icons/wiki.png";
+import AnimeEdit from "views/anime-edit/anime-edit";
+import { ConfirmDialog } from "primereact/confirmdialog"; // For <ConfirmDialog /> component
+import { confirmDialog } from "primereact/confirmdialog"; // For confirmDialog method
 // import SvgComponent from "views/anime-list/wiki";
 
 const Label = styled.div`
@@ -45,17 +51,26 @@ interface LayoutOption {
 }
 const AnimeList = () => {
   const [animeList, setAnimeList] = useState([] as AnimeInfo[]);
-  const { data: animeListData } = useAnimeListQuery();
+  const { data: animeListData, refetch: animeListDataRefetch } =
+    useAnimeListQuery();
   const { data: watchedData, refetch: allWatchedRefetch } =
     useAllWatchedQuery();
+
+  const { data: watchProgressData, refetch: allWatchProgressRefetch } =
+    useAllWatchProgressQuery();
 
   const [searchInput, setSearchInput] = useState("");
   const [layout, setLayout] = useState("list");
   const [sortKey, setSortKey] = useState<string>("new");
+  const [visibleEdit, setVisibleEdit] = useState({ name: "", visible: false });
+  const [visibleWatchProgress, setVisibleWatchProgress] = useState({
+    name: "",
+    value: "",
+    visible: false,
+  });
 
   useEffect(() => {
-    if (animeListData?.type === "S")
-      setAnimeList(handleDate(animeListData.data));
+    if (animeListData?.type === "S") doSearch(searchInput);
   }, [animeListData, watchedData]);
 
   const handleDate = (arr: AnimeInfo[]) => {
@@ -69,18 +84,17 @@ const AnimeList = () => {
     return result;
   };
 
-  const doSearch = () => {
+  const doSearch = (str: string) => {
     if (animeListData) {
-      if (isBlank(searchInput)) {
-        setAnimeList(animeListData.data);
-      }
-      setAnimeList(
-        animeListData.data.filter(
+      let result: AnimeInfo[] = handleDate(animeListData.data);
+      if (!isBlank(str)) {
+        result = result.filter(
           (x) =>
             x.officialName.indexOf(searchInput) !== -1 ||
             x.chineseName?.indexOf(searchInput) !== -1
-        )
-      );
+        );
+      }
+      setAnimeList(result);
     }
   };
 
@@ -139,15 +153,27 @@ const AnimeList = () => {
           options={options}
         /> */}
         </div>
-        <InputText
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.code === "Enter") {
-              doSearch();
-            }
-          }}
-        />
+        <div>
+          <InputText
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.code === "Enter") {
+                doSearch(searchInput);
+              }
+            }}
+          />
+          <Button
+            icon="pi pi-times"
+            rounded
+            text
+            severity="secondary"
+            onClick={() => {
+              setSearchInput("");
+              doSearch("");
+            }}
+          />
+        </div>
         <Dropdown
           options={sortOptions}
           value={sortKey}
@@ -187,7 +213,7 @@ const AnimeList = () => {
 
     const setWatched = async (data: AnimeInfo) => {
       await watched({
-        officeName: data.officialName,
+        officialName: data.officialName,
         watched: !data.watched,
       });
 
@@ -292,7 +318,27 @@ const AnimeList = () => {
                     setWatched(data);
                   }}
                 ></Button>
-                <Button label="進度" icon="pi pi-heart" outlined></Button>
+                <Button
+                  label={
+                    isBlank(watchProgressData?.data[data.officialName])
+                      ? "觀看進度"
+                      : `觀看進度 - ${
+                          watchProgressData?.data[data.officialName]
+                        }`
+                  }
+                  icon="pi pi-calendar-plus"
+                  outlined
+                  onClick={() =>
+                    setVisibleWatchProgress({
+                      visible: true,
+                      name: data.officialName,
+                      value: replace(
+                        watchProgressData?.data[data.officialName]
+                      ),
+                    })
+                  }
+                ></Button>
+                <Button label="留訊息" icon="pi pi-comments" outlined></Button>
                 <Button label="TAG" icon="pi pi-tags" outlined></Button>
               </div>
             </div>
@@ -315,7 +361,15 @@ const AnimeList = () => {
             ></Button>
           )}
 
-          <Button icon="pi pi-pencil" rounded text aria-label="Filter"></Button>
+          <Button
+            icon="pi pi-pencil"
+            rounded
+            text
+            aria-label="Filter"
+            onClick={() =>
+              setVisibleEdit({ name: data.officialName, visible: true })
+            }
+          ></Button>
         </div>
       </Item>
     );
@@ -330,6 +384,73 @@ const AnimeList = () => {
         itemTemplate={animeTemplate}
         header={Header()}
       />
+      <Dialog
+        header="編輯"
+        visible={visibleEdit.visible}
+        onHide={() => {
+          setVisibleEdit({ name: "", visible: false });
+          animeListDataRefetch();
+        }}
+        style={{ width: "100vw" }}
+      >
+        <AnimeEdit isDialog={true} searchName={visibleEdit.name} />
+      </Dialog>
+      <Dialog
+        header="觀看進度"
+        visible={visibleWatchProgress.visible}
+        draggable={false}
+        onHide={() =>
+          setVisibleWatchProgress({ name: "", value: "", visible: false })
+        }
+      >
+        <WatchProgressDialog
+          name={visibleWatchProgress.name}
+          value={visibleWatchProgress.value}
+          onClose={() => {
+            allWatchProgressRefetch();
+            setVisibleWatchProgress({ name: "", value: "", visible: false });
+          }}
+        ></WatchProgressDialog>
+      </Dialog>
+      <ConfirmDialog />
+    </div>
+  );
+};
+
+const WatchProgressDialog = (props: {
+  name: string;
+  value: string;
+  onClose: () => void;
+}) => {
+  const { name, value, onClose } = props;
+  const [watchProgressInput, setWatchProgressInput] = useState(value);
+  const [watchProgress] = useWatchProgressMutation();
+
+  const confirm = async () => {
+    await watchProgress({
+      officialName: name,
+      value: watchProgressInput,
+    });
+    onClose();
+  };
+  return (
+    <div
+      style={{ display: "flex", flexDirection: "column", paddingTop: "10px" }}
+    >
+      <InputText
+        value={watchProgressInput}
+        onChange={(e) => setWatchProgressInput(e.target.value)}
+      ></InputText>
+      <div
+        style={{ display: "flex", justifyContent: "end", paddingTop: "10px" }}
+      >
+        <Button
+          label="取消"
+          onClick={onClose}
+          style={{ marginRight: "5px" }}
+        ></Button>
+        <Button label="確定" onClick={confirm}></Button>
+      </div>
     </div>
   );
 };

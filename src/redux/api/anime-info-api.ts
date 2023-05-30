@@ -1,4 +1,11 @@
-import { AnimeInfo, Result, SearchParam, WatchParam } from "utils/typings";
+import {
+  AnimeInfo,
+  DeleteParam,
+  Result,
+  SearchParam,
+  WatchParam,
+  WatchProgressParam,
+} from "utils/typings";
 import { api } from "./api";
 
 export const animeInfoApi = api.injectEndpoints({
@@ -35,6 +42,28 @@ export const animeInfoApi = api.injectEndpoints({
     >({
       query: () => "/anime-info/allWatched",
     }),
+    watchProgress: build.mutation<Result<boolean>, WatchProgressParam>({
+      query: (req) => ({
+        url: "/anime-info/watchProgress",
+        method: "POST",
+        body: req,
+      }),
+    }),
+    allWatchProgress: build.query<
+      Result<{
+        [key: string]: string;
+      }>,
+      void
+    >({
+      query: () => "/anime-info/allWatchProgress",
+    }),
+    deleteAnime: build.mutation<Result<boolean>, DeleteParam>({
+      query: (req) => ({
+        url: "/anime-info/deleteAnime",
+        method: "POST",
+        body: req,
+      }),
+    }),
   }),
 });
 
@@ -44,4 +73,7 @@ export const {
   useAnimeListQuery,
   useWatchedMutation,
   useAllWatchedQuery,
+  useDeleteAnimeMutation,
+  useAllWatchProgressQuery,
+  useWatchProgressMutation,
 } = animeInfoApi;
