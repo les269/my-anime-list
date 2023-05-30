@@ -1,17 +1,22 @@
 pipeline{
-    agent any
+    agent {
+        docker {
+            image 'node:current-alpine3.17'
+            args '-v $HOME/.m2:/root/.m2'
+        }
+    }
 
     stages{
         stage('Checkout') {
             steps {
                 // 檢查源碼庫到 workspace
-                checkout([$class: 'GitSCM', branches: [[name: '*/master']], userRemoteConfigs: [[url: 'https://github.com/les269/my-anime-service.git']]])
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], userRemoteConfigs: [[url: 'https://github.com/les269/my-anime-list.git']]])
             }
         }
 
         stage('init') {
             steps {
-                sh  'npm install'
+                sh  'yarn install'
             }
         }
 
