@@ -5,8 +5,8 @@ pipeline{
         stage('Checkout') {
             steps {
                 // 檢查源碼庫到 workspace
-                //checkout([$class: 'GitSCM', branches: [[name: '*/master']], userRemoteConfigs: [[url: 'https://github.com/les269/my-anime-list.git']]])
-                checkout scm
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], userRemoteConfigs: [[url: 'https://github.com/les269/my-anime-list.git']]])
+                // checkout scm
             }
         }
 
@@ -49,7 +49,7 @@ pipeline{
         stage('Deploy') {
             steps {
                 script{
-                    def rmContainer = sh script: 'docker rm my-anime-list-container', returnStatus: true
+                    def rmContainer = sh script: 'docker container rm my-anime-list-container', returnStatus: true
                     def rmImage = sh script: 'docker image rm my-anime-list', returnStatus: true
                     sh 'docker build -t my-anime-list .'
                     sh 'docker run -d -p 8092:80 --name my-anime-list-container my-anime-list'
