@@ -3,7 +3,6 @@ import { MyRouteList } from "../../utils/constants";
 import Header from "./header";
 import styled from "styled-components";
 import { useState } from "react";
-import { Ripple } from "primereact/ripple";
 
 const Layout = ({ className }: { className?: string }) => {
   const [showSidebar, setShowSidebar] = useState(false);

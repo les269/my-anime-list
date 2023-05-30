@@ -52,7 +52,7 @@ const AnimeEdit = () => {
 
   // const [values, setValues] = useState(initialValues);
   const [updateAnimeInfo] = useUpdateAnimeInfoMutation();
-  const [searchAnimeInfo, searchResult] = useSearchAnimeInfoMutation();
+  const [searchAnimeInfo] = useSearchAnimeInfoMutation();
   const toast = useRef<Toast>(null);
 
   const search = async () => {
