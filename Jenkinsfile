@@ -1,10 +1,5 @@
 pipeline{
-    agent {
-        docker {
-            image 'node:current-alpine3.17'
-            args '-v $HOME/.m2:/root/.m2'
-        }
-    }
+    agent any
 
     stages{
         stage('Checkout') {
@@ -16,25 +11,42 @@ pipeline{
         }
 
         stage('init') {
+            agent {
+                docker {
+                    image 'node:current-alpine3.17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
+            }
             steps {
                 sh  'yarn install'
             }
         }
 
         stage('Build') {
+            agent {
+                docker {
+                    image 'node:current-alpine3.17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
+            }
             steps {
                 sh  'npm run build:docker'
             }
         }
 
         stage('Test') {
+            agent {
+                docker {
+                    image 'node:current-alpine3.17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
+            }
             steps {
                 sh  'npm run test'
             }
         }
 
         stage('Deploy') {
-            agent any
             steps {
                 script{
                     def rmContainer = sh script: 'docker rm my-anime-list-container', returnStatus: true
