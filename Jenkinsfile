@@ -1,12 +1,24 @@
 pipeline{
     agent any
+    // agent {
+    //     node {
+    //         label 'master'
+    //         customWorkspace '/var/jenkins_home/workspace/myAnimeList'
+    //     }
+    // }
+
+    options {
+        // This is required if you want to clean before build
+        skipDefaultCheckout(true)
+        //customWorkspace '/home/workspace/myAnimeList'
+    }
 
     stages{
+
         stage('Checkout') {
             steps {
                 // 檢查源碼庫到 workspace
                 checkout([$class: 'GitSCM', branches: [[name: '*/master']], userRemoteConfigs: [[url: 'https://github.com/les269/my-anime-list.git']]])
-                // checkout scm
             }
         }
 
@@ -15,10 +27,14 @@ pipeline{
                 docker {
                     image 'node:current-alpine3.17'
                     args '-v $HOME/.m2:/root/.m2'
+                    // Run the container on the node specified at the
+                    // top-level of the Pipeline, in the same workspace,
+                    // rather than on a new node entirely:
+                    reuseNode true
                 }
             }
             steps {
-                sh  'yarn install'
+                sh  'yarn install '
             }
         }
 
@@ -27,6 +43,10 @@ pipeline{
                 docker {
                     image 'node:current-alpine3.17'
                     args '-v $HOME/.m2:/root/.m2'
+                    // Run the container on the node specified at the
+                    // top-level of the Pipeline, in the same workspace,
+                    // rather than on a new node entirely:
+                    reuseNode true
                 }
             }
             steps {
@@ -39,6 +59,10 @@ pipeline{
                 docker {
                     image 'node:current-alpine3.17'
                     args '-v $HOME/.m2:/root/.m2'
+                    // Run the container on the node specified at the
+                    // top-level of the Pipeline, in the same workspace,
+                    // rather than on a new node entirely:
+                    reuseNode true
                 }
             }
             steps {
@@ -57,5 +81,10 @@ pipeline{
                 }
             }
         }
+        // stage('Clean Workspace') {
+        //     steps {
+        //         cleanWs()
+        //     }
+        // }
     }
 }
