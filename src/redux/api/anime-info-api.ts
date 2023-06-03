@@ -57,6 +57,21 @@ export const animeInfoApi = api.injectEndpoints({
     >({
       query: () => "/anime-info/allWatchProgress",
     }),
+    message: build.mutation<Result<boolean>, WatchProgressParam>({
+      query: (req) => ({
+        url: "/anime-info/message",
+        method: "POST",
+        body: req,
+      }),
+    }),
+    allMessage: build.query<
+      Result<{
+        [key: string]: string;
+      }>,
+      void
+    >({
+      query: () => "/anime-info/allMessage",
+    }),
     deleteAnime: build.mutation<Result<boolean>, DeleteParam>({
       query: (req) => ({
         url: "/anime-info/deleteAnime",
@@ -76,4 +91,6 @@ export const {
   useDeleteAnimeMutation,
   useAllWatchProgressQuery,
   useWatchProgressMutation,
+  useAllMessageQuery,
+  useMessageMutation,
 } = animeInfoApi;

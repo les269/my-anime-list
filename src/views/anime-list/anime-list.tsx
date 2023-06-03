@@ -1,9 +1,11 @@
 import { DataView } from "primereact/dataview";
 import { useEffect, useState } from "react";
 import {
+  useAllMessageQuery,
   useAllWatchProgressQuery,
   useAllWatchedQuery,
   useAnimeListQuery,
+  useMessageMutation,
   useWatchProgressMutation,
   useWatchedMutation,
 } from "../../redux/api/anime-info-api";
@@ -26,6 +28,8 @@ import AnimeEdit from "views/anime-edit/anime-edit";
 import { ConfirmDialog } from "primereact/confirmdialog"; // For <ConfirmDialog /> component
 import { confirmDialog } from "primereact/confirmdialog"; // For confirmDialog method
 // import SvgComponent from "views/anime-list/wiki";
+import { Inplace, InplaceDisplay, InplaceContent } from "primereact/inplace";
+import { InputTextarea } from "primereact/inputtextarea";
 
 const Label = styled.div`
   user-select: none;
@@ -58,12 +62,19 @@ const AnimeList = () => {
 
   const { data: watchProgressData, refetch: allWatchProgressRefetch } =
     useAllWatchProgressQuery();
+  const { data: messageData, refetch: allMessageRefetch } =
+    useAllMessageQuery();
 
   const [searchInput, setSearchInput] = useState("");
   const [layout, setLayout] = useState("list");
   const [sortKey, setSortKey] = useState<string>("new");
   const [visibleEdit, setVisibleEdit] = useState({ name: "", visible: false });
   const [visibleWatchProgress, setVisibleWatchProgress] = useState({
+    name: "",
+    value: "",
+    visible: false,
+  });
+  const [visibleMessage, setVisibleMessage] = useState({
     name: "",
     value: "",
     visible: false,
@@ -296,16 +307,21 @@ const AnimeList = () => {
                 <div className="flex align-items-start ">
                   <Label>大綱</Label>
                   <span className="flex align-items-center ">
-                    <ReadOnlyReactQuill>
-                      <ReactQuill
-                        defaultValue={data.outline}
-                        readOnly
-                        theme="snow"
-                        modules={{
-                          toolbar: false,
-                        }}
-                      />
-                    </ReadOnlyReactQuill>
+                    <Inplace closable>
+                      <InplaceDisplay>{"顯示"}</InplaceDisplay>
+                      <InplaceContent>
+                        <ReadOnlyReactQuill>
+                          <ReactQuill
+                            defaultValue={data.outline}
+                            readOnly
+                            theme="snow"
+                            modules={{
+                              toolbar: false,
+                            }}
+                          />
+                        </ReadOnlyReactQuill>
+                      </InplaceContent>
+                    </Inplace>
                   </span>
                 </div>
               )}
@@ -338,7 +354,22 @@ const AnimeList = () => {
                     })
                   }
                 ></Button>
-                <Button label="留訊息" icon="pi pi-comments" outlined></Button>
+                <Button
+                  label={
+                    isBlank(messageData?.data[data.officialName])
+                      ? "留訊息"
+                      : `留訊息 - ${messageData?.data[data.officialName]}`
+                  }
+                  icon="pi pi-comments"
+                  outlined
+                  onClick={() =>
+                    setVisibleMessage({
+                      visible: true,
+                      name: data.officialName,
+                      value: replace(messageData?.data[data.officialName]),
+                    })
+                  }
+                ></Button>
                 <Button label="TAG" icon="pi pi-tags" outlined></Button>
               </div>
             </div>
@@ -412,6 +443,23 @@ const AnimeList = () => {
           }}
         ></WatchProgressDialog>
       </Dialog>
+      <Dialog
+        header="留言"
+        visible={visibleMessage.visible}
+        draggable={false}
+        onHide={() =>
+          setVisibleMessage({ name: "", value: "", visible: false })
+        }
+      >
+        <MessageDialog
+          name={visibleMessage.name}
+          value={visibleMessage.value}
+          onClose={() => {
+            allMessageRefetch();
+            setVisibleMessage({ name: "", value: "", visible: false });
+          }}
+        ></MessageDialog>
+      </Dialog>
       <ConfirmDialog />
     </div>
   );
@@ -441,6 +489,47 @@ const WatchProgressDialog = (props: {
         value={watchProgressInput}
         onChange={(e) => setWatchProgressInput(e.target.value)}
       ></InputText>
+      <div
+        style={{ display: "flex", justifyContent: "end", paddingTop: "10px" }}
+      >
+        <Button
+          label="取消"
+          onClick={onClose}
+          style={{ marginRight: "5px" }}
+        ></Button>
+        <Button label="確定" onClick={confirm}></Button>
+      </div>
+    </div>
+  );
+};
+
+const MessageDialog = (props: {
+  name: string;
+  value: string;
+  onClose: () => void;
+}) => {
+  const { name, value, onClose } = props;
+  const [messageInput, setMessageInput] = useState(value);
+  const [message] = useMessageMutation();
+
+  const confirm = async () => {
+    await message({
+      officialName: name,
+      value: messageInput,
+    });
+    onClose();
+  };
+  return (
+    <div
+      style={{ display: "flex", flexDirection: "column", paddingTop: "10px" }}
+    >
+      <InputTextarea
+        autoResize
+        value={messageInput}
+        onChange={(e) => setMessageInput(e.target.value)}
+        rows={5}
+        cols={30}
+      />
       <div
         style={{ display: "flex", justifyContent: "end", paddingTop: "10px" }}
       >
