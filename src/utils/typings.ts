@@ -47,3 +47,13 @@ export interface WatchProgressParam {
 export interface DeleteParam {
   officialName: string;
 }
+
+export interface AnimeTag {
+  id: string;
+  desc: string;
+}
+
+export interface VideoTagRequest {
+  officialName: string;
+  idList: string[];
+}

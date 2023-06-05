@@ -1,8 +1,10 @@
 import {
   AnimeInfo,
+  AnimeTag,
   DeleteParam,
   Result,
   SearchParam,
+  VideoTagRequest,
   WatchParam,
   WatchProgressParam,
 } from "utils/typings";
@@ -79,6 +81,32 @@ export const animeInfoApi = api.injectEndpoints({
         body: req,
       }),
     }),
+    allTags: build.query<Result<AnimeTag[]>, void>({
+      query: () => "/anime-info/allTags",
+    }),
+    updateTag: build.mutation<Result<boolean>, AnimeTag>({
+      query: (req) => ({
+        url: "/anime-info/updateTag",
+        method: "POST",
+        body: req,
+      }),
+    }),
+    deleteTag: build.mutation<Result<boolean>, string>({
+      query: (tag) => ({
+        url: `/anime-info/deleteTag?id=${tag}`,
+        method: "DELETE",
+      }),
+    }),
+    allVideoTags: build.query<Result<{ [key: string]: string[] }>, void>({
+      query: () => "/anime-info/allVideoTags",
+    }),
+    updateVideoTag: build.mutation<Result<boolean>, VideoTagRequest>({
+      query: (req) => ({
+        url: `/anime-info/updateVideoTag`,
+        method: "POST",
+        body: req,
+      }),
+    }),
   }),
 });
 
@@ -93,4 +121,9 @@ export const {
   useWatchProgressMutation,
   useAllMessageQuery,
   useMessageMutation,
+  useAllTagsQuery,
+  useUpdateTagMutation,
+  useDeleteTagMutation,
+  useAllVideoTagsQuery,
+  useUpdateVideoTagMutation,
 } = animeInfoApi;

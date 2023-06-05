@@ -1,35 +1,37 @@
 import { DataView } from "primereact/dataview";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useAllMessageQuery,
+  useAllTagsQuery,
+  useAllVideoTagsQuery,
   useAllWatchProgressQuery,
   useAllWatchedQuery,
   useAnimeListQuery,
   useMessageMutation,
+  useUpdateVideoTagMutation,
   useWatchProgressMutation,
   useWatchedMutation,
 } from "../../redux/api/anime-info-api";
-import { AnimeInfo } from "utils/typings";
+import { AnimeInfo, AnimeTag } from "utils/typings";
 import { Chip } from "primereact/chip";
 import moment, { isDate } from "moment";
 import styled from "styled-components";
-import { SelectButton } from "primereact/selectbutton";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { Dropdown, DropdownChangeEvent } from "primereact/dropdown";
 import { Dialog } from "primereact/dialog";
 
-import ReactQuill from "react-quill";
 import "./anime-list.scss";
 import { clone, isBlank, isEmpty, replace } from "utils/helpers";
 
 import wiki from "assets/icons/wiki.png";
 import AnimeEdit from "views/anime-edit/anime-edit";
 import { ConfirmDialog } from "primereact/confirmdialog"; // For <ConfirmDialog /> component
-import { confirmDialog } from "primereact/confirmdialog"; // For confirmDialog method
 // import SvgComponent from "views/anime-list/wiki";
-import { Inplace, InplaceDisplay, InplaceContent } from "primereact/inplace";
 import { InputTextarea } from "primereact/inputtextarea";
+import TagList from "views/tag-list/tag-list";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
 
 const Label = styled.div`
   user-select: none;
@@ -41,14 +43,6 @@ const Label = styled.div`
   }
 `;
 
-const ReadOnlyReactQuill = styled.div`
-  .ql-container {
-    border: 0;
-  }
-  .ql-editor {
-    padding: 0;
-  }
-`;
 interface LayoutOption {
   icon: string;
   value: string;
@@ -64,6 +58,9 @@ const AnimeList = () => {
     useAllWatchProgressQuery();
   const { data: messageData, refetch: allMessageRefetch } =
     useAllMessageQuery();
+  const { data: tagData, refetch: allTagRefetch } = useAllTagsQuery();
+  const { data: allVideoTags, refetch: allVideoTagRefetch } =
+    useAllVideoTagsQuery();
 
   const [searchInput, setSearchInput] = useState("");
   const [layout, setLayout] = useState("list");
@@ -77,6 +74,12 @@ const AnimeList = () => {
   const [visibleMessage, setVisibleMessage] = useState({
     name: "",
     value: "",
+    visible: false,
+  });
+  const [visibleTag, setVisibleTag] = useState(false);
+  const [selectTag, setSelectTag] = useState([] as AnimeTag[]);
+  const [visibleSelectTag, setVisibleSelectTag] = useState({
+    name: "",
     visible: false,
   });
 
@@ -303,25 +306,30 @@ const AnimeList = () => {
                   </span>
                 </div>
               )}
+              {allVideoTags?.data[data.officialName] && (
+                <div className="flex align-items-center ">
+                  <Label>TAG</Label>
+                  <span className="flex align-items-center gap-2">
+                    {tagData?.data
+                      .filter(
+                        (x) =>
+                          allVideoTags.data[data.officialName].indexOf(x.id) >
+                          -1
+                      )
+                      .map((x) => (
+                        <Chip
+                          label={x.desc}
+                          style={{ cursor: "pointer", userSelect: "none" }}
+                        />
+                      ))}
+                  </span>
+                </div>
+              )}
               {data.outline && (
                 <div className="flex align-items-start ">
                   <Label>大綱</Label>
                   <span className="flex align-items-center ">
-                    <Inplace closable>
-                      <InplaceDisplay>{"顯示"}</InplaceDisplay>
-                      <InplaceContent>
-                        <ReadOnlyReactQuill>
-                          <ReactQuill
-                            defaultValue={data.outline}
-                            readOnly
-                            theme="snow"
-                            modules={{
-                              toolbar: false,
-                            }}
-                          />
-                        </ReadOnlyReactQuill>
-                      </InplaceContent>
-                    </Inplace>
+                    <Outline html={data.outline}></Outline>
                   </span>
                 </div>
               )}
@@ -370,7 +378,33 @@ const AnimeList = () => {
                     })
                   }
                 ></Button>
-                <Button label="TAG" icon="pi pi-tags" outlined></Button>
+                <Button
+                  label="TAG"
+                  icon="pi pi-tags"
+                  outlined
+                  onClick={() => {
+                    if (
+                      allVideoTags?.data[data.officialName] &&
+                      tagData?.data
+                    ) {
+                      setSelectTag(
+                        tagData?.data.filter(
+                          (x) =>
+                            allVideoTags?.data[data.officialName].indexOf(
+                              x.id
+                            ) > -1
+                        )
+                      );
+                    } else {
+                      setSelectTag([]);
+                    }
+
+                    setVisibleSelectTag({
+                      name: data.officialName,
+                      visible: true,
+                    });
+                  }}
+                ></Button>
               </div>
             </div>
             <div></div>
@@ -408,6 +442,7 @@ const AnimeList = () => {
 
   return (
     <div>
+      <Button onClick={() => setVisibleTag(true)}>編輯TAG</Button>
       <DataView
         value={animeList}
         paginator
@@ -461,6 +496,34 @@ const AnimeList = () => {
         ></MessageDialog>
       </Dialog>
       <ConfirmDialog />
+      <Dialog
+        style={{ width: "400px", height: "80vh" }}
+        header="TAG清單"
+        visible={visibleTag}
+        draggable={false}
+        onHide={() => {
+          setVisibleTag(false);
+          allTagRefetch();
+        }}
+      >
+        <TagList />
+      </Dialog>
+      <Dialog
+        style={{ width: "300px", height: "60vh" }}
+        header="選擇TAG"
+        visible={visibleSelectTag.visible}
+        draggable={false}
+        onHide={() => {
+          allVideoTagRefetch();
+          setVisibleSelectTag({ name: "", visible: false });
+        }}
+      >
+        <SelectTag
+          officialName={visibleSelectTag.name}
+          tagData={tagData?.data ? tagData.data : []}
+          selectTag={selectTag}
+        ></SelectTag>
+      </Dialog>
     </div>
   );
 };
@@ -546,6 +609,96 @@ const MessageDialog = (props: {
 
 const gridItem = (data: AnimeInfo) => {
   return <div className="col-12 sm:col-6 lg:col-12 xl:col-4 p-2"></div>;
+};
+
+const Outline = (props: { html: string }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showBtn, setShowBtn] = useState(false);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (
+        contentRef.current &&
+        contentRef.current.scrollHeight > contentRef.current.clientHeight
+      ) {
+        setIsExpanded(false);
+      }
+    };
+    if (contentRef.current && contentRef.current.clientHeight > 18) {
+      setShowBtn(true);
+    }
+    checkOverflow();
+    window.addEventListener("resize", checkOverflow);
+    return () => {
+      window.removeEventListener("resize", checkOverflow);
+    };
+  }, []);
+
+  const handleToggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  return (
+    <div>
+      <div
+        style={{
+          fontSize: "13px",
+          lineHeight: "18px",
+          display: "-webkit-box",
+          WebkitLineClamp: isExpanded ? "unset" : 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+        ref={contentRef}
+        dangerouslySetInnerHTML={{ __html: props.html }}
+      ></div>
+      {showBtn && (
+        <div className="flex justify-content-end">
+          <i
+            className={isExpanded ? "pi pi-angle-up" : "pi pi-angle-down"}
+            style={{ fontSize: "1.2rem" }}
+            onClick={handleToggleExpand}
+          ></i>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SelectTag = (props: {
+  officialName: string;
+  tagData: AnimeTag[];
+  selectTag: AnimeTag[];
+}) => {
+  const [selectTag, setSelectTag] = useState(props.selectTag);
+  const [updateVideoTag] = useUpdateVideoTagMutation();
+
+  const selectionChange = async (val: AnimeTag[]) => {
+    await updateVideoTag({
+      officialName: props.officialName,
+      idList: val.map((x) => x.id),
+    });
+    setSelectTag(val);
+  };
+  return (
+    <DataTable
+      value={props.tagData}
+      selectionMode="multiple"
+      dataKey="id"
+      scrollable
+      scrollHeight="60vh"
+      metaKeySelection={false}
+      selection={selectTag}
+      onSelectionChange={(e) => {
+        selectionChange(Array.isArray(e.value) ? e.value : []);
+      }}
+    >
+      <Column field="id" header="id"></Column>
+      <Column field="desc" header="desc"></Column>
+    </DataTable>
+  );
 };
 
 export default AnimeList;

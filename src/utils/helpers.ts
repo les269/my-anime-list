@@ -20,7 +20,7 @@ export const isBlank = (str: string | null | undefined): boolean =>
   str === null || str === undefined || str.trim() === "";
 
 export const replace = (str: string | null | undefined): string =>
-  isBlank(str) ? "" : str!;
+  isBlank(str) ? "" : str?.trim()!;
 
 export const isNumeric = (value: any): boolean =>
   !isNaN(parseFloat(value)) && isFinite(value);
