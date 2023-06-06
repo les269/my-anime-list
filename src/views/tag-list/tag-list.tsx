@@ -19,10 +19,12 @@ const TagDialogItem = {
   visible: false,
 };
 const TagList = () => {
-  const { data: tagList, refetch } = useAllTagsQuery();
   const [visibleEditDialog, setVisibleEditDialog] = useState<boolean>(false);
   const [editItem, setEditItem] = useState({ id: "", desc: "" } as AnimeTag);
   const [deleteProductDialog, setDeleteProductDialog] = useState(TagDialogItem);
+  const [idState, setIdState] = useState("new" as "new" | "modify");
+
+  const { data: tagList, refetch } = useAllTagsQuery();
   const [updateTag] = useUpdateTagMutation();
   const [deleteTag] = useDeleteTagMutation();
   const showToast = useToast();
@@ -51,6 +53,7 @@ const TagList = () => {
           icon="pi pi-plus"
           outlined
           onClick={() => {
+            setIdState("new");
             setEditItem(TagDialogItem.data);
             setVisibleEditDialog(true);
           }}
@@ -75,6 +78,7 @@ const TagList = () => {
                   outlined
                   className="mr-2"
                   onClick={() => {
+                    setIdState("modify");
                     setVisibleEditDialog(true);
                     setEditItem(rowData);
                   }}
@@ -118,6 +122,7 @@ const TagList = () => {
         <div style={{ paddingBottom: "10px" }}>
           <label className="font-bold inline-block mb-2">Id</label>
           <InputText
+            disabled={idState === "modify"}
             className="w-full"
             value={editItem.id}
             onChange={(e) => setEditItem({ ...editItem, id: e.target.value })}

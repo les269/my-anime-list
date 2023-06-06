@@ -3,6 +3,7 @@ import { MyRouteList } from "../../utils/constants";
 import Header from "./header";
 import styled from "styled-components";
 import { useState } from "react";
+import ScrollToTopButton from "./scroll-to-top-button";
 
 const Layout = ({ className }: { className?: string }) => {
   const [showSidebar, setShowSidebar] = useState(false);
@@ -30,6 +31,7 @@ const Layout = ({ className }: { className?: string }) => {
         <div className="content">
           <Outlet></Outlet>
         </div>
+        <ScrollToTopButton />
       </div>
     </div>
   );

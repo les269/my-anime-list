@@ -1,5 +1,5 @@
 import { DataView } from "primereact/dataview";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   useAllMessageQuery,
   useAllTagsQuery,
@@ -22,7 +22,7 @@ import { Dropdown, DropdownChangeEvent } from "primereact/dropdown";
 import { Dialog } from "primereact/dialog";
 
 import "./anime-list.scss";
-import { clone, isBlank, isEmpty, replace } from "utils/helpers";
+import { clone, get, isBlank, isEmpty, replace } from "utils/helpers";
 
 import wiki from "assets/icons/wiki.png";
 import AnimeEdit from "views/anime-edit/anime-edit";
@@ -32,6 +32,7 @@ import { InputTextarea } from "primereact/inputtextarea";
 import TagList from "views/tag-list/tag-list";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
+import hash from "object-hash";
 
 const Label = styled.div`
   user-select: none;
@@ -43,10 +44,24 @@ const Label = styled.div`
   }
 `;
 
+const Item = styled.div`
+  &:hover {
+    .editbutton {
+      display: block;
+    }
+  }
+  .editbutton {
+    display: none;
+    right: 0px;
+    top: 0px;
+  }
+`;
+
 interface LayoutOption {
   icon: string;
   value: string;
 }
+
 const AnimeList = () => {
   const [animeList, setAnimeList] = useState([] as AnimeInfo[]);
   const { data: animeListData, refetch: animeListDataRefetch } =
@@ -62,9 +77,8 @@ const AnimeList = () => {
   const { data: allVideoTags, refetch: allVideoTagRefetch } =
     useAllVideoTagsQuery();
 
-  const [searchInput, setSearchInput] = useState("");
   const [layout, setLayout] = useState("list");
-  const [sortKey, setSortKey] = useState<string>("new");
+
   const [visibleEdit, setVisibleEdit] = useState({ name: "", visible: false });
   const [visibleWatchProgress, setVisibleWatchProgress] = useState({
     name: "",
@@ -82,9 +96,15 @@ const AnimeList = () => {
     name: "",
     visible: false,
   });
+  const [listState, setListState] = useState({
+    sortKey: "new",
+    searchInput: "",
+  });
 
   useEffect(() => {
-    if (animeListData?.type === "S") doSearch(searchInput);
+    if (animeListData?.type === "S") {
+      onSearch(listState.searchInput);
+    }
   }, [animeListData, watchedData]);
 
   const handleDate = (arr: AnimeInfo[]) => {
@@ -93,15 +113,16 @@ const AnimeList = () => {
       data.startDate = new Date(data.startDate);
       data.endDate = new Date(data.startDate);
     }
-    doSort(result, sortKey);
+    onSort(result, listState.sortKey);
     setWatched(result);
     return result;
   };
 
-  const doSearch = (str: string) => {
+  const onSearch = (searchInput: string) => {
+    setListState({ ...listState, searchInput });
     if (animeListData) {
       let result: AnimeInfo[] = handleDate(animeListData.data);
-      if (!isBlank(str)) {
+      if (!isBlank(searchInput)) {
         result = result.filter(
           (x) =>
             x.officialName.indexOf(searchInput) !== -1 ||
@@ -112,16 +133,17 @@ const AnimeList = () => {
     }
   };
 
-  const doSort = (list: AnimeInfo[], sort: string) => {
+  const onSort = (list: AnimeInfo[], sortKey: string) => {
+    setListState({ ...listState, sortKey });
     list.sort((a, b) => {
       if (
-        !isDate(a.startDate) ||
-        !isDate(b.startDate) ||
+        !isDate(get(a, "startDate")) ||
+        !isDate(get(b, "startDate")) ||
         a.startDate === b.startDate
       ) {
         return 0;
       }
-      if (sort === "new") {
+      if (sortKey === "new") {
         return moment(a.startDate).isAfter(b.startDate) ? -1 : 1;
       } else {
         return moment(a.startDate).isAfter(b.startDate) ? 1 : -1;
@@ -138,92 +160,18 @@ const AnimeList = () => {
     return list;
   };
 
-  const Header = () => {
-    const options: LayoutOption[] = [
-      { icon: "pi pi-bars", value: "list" },
-      { icon: "pi pi-th-large", value: "grid" },
-    ];
-    const sortOptions = [
-      { label: "播放日期-新", value: "new" },
-      { label: "播放日期-舊", value: "old" },
-    ];
-    const layoutTemplate = (option: LayoutOption) => {
-      return <i className={option.icon}></i>;
-    };
-    const onSortChange = (event: DropdownChangeEvent) => {
-      const value = event.value;
-      setSortKey(value);
-      doSort(animeList, value);
-      setAnimeList(animeList);
-    };
-    return (
-      <div className="flex justify-content-between">
-        <div>
-          {/* <SelectButton
-          value={layout}
-          optionLabel="value"
-          onChange={(e) => setLayout(e.value)}
-          itemTemplate={layoutTemplate}
-          options={options}
-        /> */}
-        </div>
-        <div>
-          <InputText
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.code === "Enter") {
-                doSearch(searchInput);
-              }
-            }}
-          />
-          <Button
-            icon="pi pi-times"
-            rounded
-            text
-            severity="secondary"
-            onClick={() => {
-              setSearchInput("");
-              doSearch("");
-            }}
-          />
-        </div>
-        <Dropdown
-          options={sortOptions}
-          value={sortKey}
-          optionLabel="label"
-          placeholder={sortOptions[0].label}
-          onChange={onSortChange}
-          className="w-full sm:w-14rem"
-        />
-      </div>
-    );
-  };
+  // const animeTemplate = (data: AnimeInfo) => {
+  //   if (!data) {
+  //     return;
+  //   }
 
-  const animeTemplate = (data: AnimeInfo) => {
-    if (!data) {
-      return;
-    }
+  //   if (layout === "list") return ListItem(data);
+  //   else if (layout === "grid") return gridItem(data);
+  // };
 
-    if (layout === "list") return ListItem(data);
-    else if (layout === "grid") return gridItem(data);
-  };
-
-  const ListItem = (data: AnimeInfo) => {
+  const ListItem = (props: { data: AnimeInfo }) => {
+    const { data } = props;
     const [watched] = useWatchedMutation();
-
-    const Item = styled.div`
-      &:hover {
-        .editbutton {
-          display: block;
-        }
-      }
-      .editbutton {
-        display: none;
-        right: 0px;
-        top: 0px;
-      }
-    `;
 
     const setWatched = async (data: AnimeInfo) => {
       await watched({
@@ -233,6 +181,7 @@ const AnimeList = () => {
 
       allWatchedRefetch();
     };
+
     return (
       <Item className="col-12 relative">
         <div className="flex flex-column xl:flex-row xl:align-items-center p-4 gap-4">
@@ -271,6 +220,7 @@ const AnimeList = () => {
                   <span className="flex align-items-center gap-2">
                     {data.author?.map((x) => (
                       <Chip
+                        key={hash(x)}
                         label={x}
                         style={{ cursor: "pointer", userSelect: "none" }}
                       />
@@ -447,8 +397,18 @@ const AnimeList = () => {
         value={animeList}
         paginator
         rows={30}
-        itemTemplate={animeTemplate}
-        header={Header()}
+        itemTemplate={(item) => (
+          <ListItem key={item.officialName} data={item} />
+        )}
+        header={
+          <Header
+            onSort={(sortKey: string) => {
+              onSort(animeList, sortKey);
+              setAnimeList(animeList);
+            }}
+            onSearch={onSearch}
+          />
+        }
       />
       <Dialog
         header="編輯"
@@ -459,7 +419,14 @@ const AnimeList = () => {
         }}
         style={{ width: "100vw" }}
       >
-        <AnimeEdit isDialog={true} searchName={visibleEdit.name} />
+        <AnimeEdit
+          isDialog={true}
+          searchName={visibleEdit.name}
+          closeDialog={() => {
+            setVisibleEdit({ name: "", visible: false });
+            animeListDataRefetch();
+          }}
+        />
       </Dialog>
       <Dialog
         header="觀看進度"
@@ -616,7 +583,7 @@ const Outline = (props: { html: string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showBtn, setShowBtn] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const checkOverflow = () => {
       if (
         contentRef.current &&
@@ -663,6 +630,60 @@ const Outline = (props: { html: string }) => {
           ></i>
         </div>
       )}
+    </div>
+  );
+};
+
+const Header = (props: {
+  onSort: (sortKey: string) => void;
+  onSearch: (val: string) => void;
+}) => {
+  const { onSort, onSearch } = props;
+  const [sortKey, setSortKey] = useState<string>("new");
+  const [searchInput, setSearchInput] = useState("");
+  const sortOptions = [
+    { label: "播放日期-新", value: "new" },
+    { label: "播放日期-舊", value: "old" },
+  ];
+
+  const onSortChange = (event: DropdownChangeEvent) => {
+    const value = event.value;
+    setSortKey(value);
+    onSort(value);
+  };
+
+  return (
+    <div className="flex justify-content-between">
+      <div></div>
+      <div>
+        <InputText
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.code === "Enter") {
+              onSearch(searchInput);
+            }
+          }}
+        />
+        <Button
+          icon="pi pi-times"
+          rounded
+          text
+          severity="secondary"
+          onClick={() => {
+            setSearchInput("");
+            onSearch("");
+          }}
+        />
+      </div>
+      <Dropdown
+        options={sortOptions}
+        value={sortKey}
+        optionLabel="label"
+        placeholder={sortOptions[0].label}
+        onChange={onSortChange}
+        className="w-full sm:w-14rem"
+      />
     </div>
   );
 };

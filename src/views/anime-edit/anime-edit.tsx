@@ -39,8 +39,12 @@ const Label = styled.label`
   margin-bottom: 0.5rem;
 `;
 
-const AnimeEdit = (props: { isDialog?: boolean; searchName?: string }) => {
-  const { isDialog = false, searchName = "" } = props;
+const AnimeEdit = (props: {
+  isDialog?: boolean;
+  searchName?: string;
+  closeDialog?: () => void;
+}) => {
+  const { isDialog = false, searchName = "", closeDialog } = props;
 
   const [name, setName] = useState("");
 
@@ -115,6 +119,9 @@ const AnimeEdit = (props: { isDialog?: boolean; searchName?: string }) => {
     } else {
       toast.current?.show({ severity: "error", detail: "更新失敗" });
     }
+    if (isDialog && closeDialog) {
+      closeDialog();
+    }
   };
 
   const clear = () => {
@@ -130,7 +137,7 @@ const AnimeEdit = (props: { isDialog?: boolean; searchName?: string }) => {
     setOutline("");
   };
 
-  const doDeleteAnime = () => {
+  const onDeleteAnime = () => {
     if (!isBlank(officialName)) {
       confirmDialog({
         message: (
@@ -144,6 +151,9 @@ const AnimeEdit = (props: { isDialog?: boolean; searchName?: string }) => {
         accept: () => {
           deleteAnime({ officialName });
           clear();
+          if (isDialog && closeDialog) {
+            closeDialog();
+          }
         },
       });
     } else {
@@ -326,7 +336,7 @@ const AnimeEdit = (props: { isDialog?: boolean; searchName?: string }) => {
             className="mr-4"
             label="刪除"
             severity="danger"
-            onClick={doDeleteAnime}
+            onClick={onDeleteAnime}
           ></Button>
           {!isDialog && (
             <Button className="mr-4" label="清除" onClick={clear} />
