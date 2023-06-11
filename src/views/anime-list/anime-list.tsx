@@ -32,7 +32,6 @@ import { InputTextarea } from "primereact/inputtextarea";
 import TagList from "views/tag-list/tag-list";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import hash from "object-hash";
 
 const Label = styled.div`
   user-select: none;
@@ -220,7 +219,6 @@ const AnimeList = () => {
                   <span className="flex align-items-center gap-2">
                     {data.author?.map((x) => (
                       <Chip
-                        key={hash(x)}
                         label={x}
                         style={{ cursor: "pointer", userSelect: "none" }}
                       />
